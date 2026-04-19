@@ -52,6 +52,9 @@ static int ensure_upper_parents(const char *vpath)
     if (!slash || slash == parent) return 0;
     *slash = '\0';
 
+    /* If the parent IS upper_dir, the file sits at the root — nothing to create */
+    if (strcmp(parent, state->upper_dir) == 0) return 0;
+
     /* Walk and create each component */
     char *p = parent + strlen(state->upper_dir) + 1;
     char partial[MAX_PATH];
@@ -135,7 +138,7 @@ int unionfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
     char upper_path[MAX_PATH];
     snprintf(upper_path, MAX_PATH, "%s%s", state->upper_dir, path);
 
-    int fd = open(upper_path, fi->flags | O_CREAT, mode);
+    int fd = open(upper_path, fi->flags | O_CREAT | O_WRONLY, mode);
     if (fd == -1) return -errno;
     close(fd);
     return 0;
